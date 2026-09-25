@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Minimal client for OpenAI-compatible chat APIs (xAI Grok, Groq Llama, Ollama...).
+ * Minimal client for OpenAI-compatible chat APIs (Groq, xAI Grok, Ollama...).
  * Providers are tried in order until one returns JSON that passes validation.
  */
 class LlmClient

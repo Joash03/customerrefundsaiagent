@@ -17,7 +17,7 @@ class AdminRefundRequestTest extends TestCase
     {
         parent::setUp();
         $this->seed(RefundScenarioSeeder::class);
-        config(['llm.providers.grok.api_key' => null, 'llm.providers.llama.api_key' => null]);
+        config(['llm.order' => ['groq', 'grok'], 'llm.providers.grok.api_key' => null, 'llm.providers.groq.api_key' => null]);
     }
 
     private function escalatedRequest(): RefundRequest
