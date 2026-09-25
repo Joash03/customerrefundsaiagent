@@ -1,0 +1,74 @@
+$primary: #2D4EA2;
+$font-family-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$body-bg: #f5f7fb;
+$border-radius: .5rem;
+$enable-shadows: false;
+
+@import "bootstrap/scss/bootstrap";
+
+:focus-visible {
+  outline: 3px solid rgba($primary, .6);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: .5rem;
+  z-index: 1080;
+
+  &:focus {
+    left: .5rem;
+  }
+}
+
+.chat-thread {
+  min-height: 18rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-bubble-customer {
+  background: $primary;
+  color: $white;
+}
+
+.audit-timeline {
+  border-left: 2px solid $border-color;
+  padding-left: 1.25rem;
+
+  > li {
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: calc(-1.25rem - 6px);
+      top: .4rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: $primary;
+    }
+  }
+}
+
+.payload {
+  font-size: .8125rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.text-prewrap {
+  white-space: pre-wrap;
+}
+
+.text-tabular {
+  font-variant-numeric: tabular-nums;
+}
