@@ -88,7 +88,7 @@ export default function ChatPanel({ autoFocus = false }) {
       {handedOff ? (
         <div className="chat-composer text-center">
           <p className="small text-body-secondary mb-2">This conversation has been passed to our support team.</p>
-          <button type="button" className="btn btn-primary btn-sm" onClick={startNew}>Start a new conversation</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={startNew}>Start a new chat</button>
         </div>
       ) : (
         <form className="chat-composer" onSubmit={handleSubmit}>
@@ -109,10 +109,7 @@ export default function ChatPanel({ autoFocus = false }) {
               <i className="bi bi-send-fill" aria-hidden="true" />
             </button>
           </div>
-          <div className="d-flex justify-content-between mt-1">
-            <span className="chat-hint">Press Enter to send</span>
-            <button type="button" className="btn btn-link btn-sm p-0 chat-hint" onClick={startNew} disabled={sending}>New conversation</button>
-          </div>
+          <p className="chat-hint mt-2 mb-0 ms-3">Press Enter to send, Shift + Enter for a new line</p>
         </form>
       )}
     </div>

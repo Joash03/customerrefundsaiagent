@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import ChatHeader from '../components/chat/ChatHeader'
 import ChatPanel from '../components/chat/ChatPanel'
 
 export default function SupportPage() {
@@ -8,9 +9,10 @@ export default function SupportPage() {
         <div className="col-lg-8">
           <h1 className="h2 mb-2">Support chat</h1>
           <p className="text-body-secondary mb-4">Chat with our assistant about a refund or a problem with your order.</p>
-          <div className="support-chat-card">
+          <section className="support-chat-card" aria-labelledby="support-chat-title">
+            <ChatHeader titleId="support-chat-title" />
             <ChatPanel autoFocus />
-          </div>
+          </section>
         </div>
 
         <aside className="col-lg-4 pt-lg-5" aria-label="Help with this chat">

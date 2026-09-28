@@ -457,7 +457,10 @@ h3, h4, h5, h6, .h3, .h4, .h5, .h6 {
   color: $graphite;
 }
 
+
 .support-chat-card {
+  display: flex;
+  flex-direction: column;
   height: min(72vh, 46rem);
   border: 1px solid $line;
   border-radius: 1.25rem;
@@ -490,12 +493,26 @@ h3, h4, h5, h6, .h3, .h4, .h5, .h6 {
   overflow: hidden;
 }
 
-.chat-widget-header {
+.chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: .75rem;
   padding: .75rem .75rem .75rem 1.25rem;
   border-bottom: 1px solid $line;
+  flex: 0 0 auto;
+}
+
+.chat-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.min-w-0 {
+  min-width: 0;
 }
 
 .chat-icon-btn {

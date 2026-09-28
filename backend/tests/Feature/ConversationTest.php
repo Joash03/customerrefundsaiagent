@@ -91,6 +91,18 @@ class ConversationTest extends TestCase
         $this->assertSame(0, Conversation::first()->clarification_attempts);
     }
 
+    public function test_verified_chat_cannot_switch_to_another_account(): void
+    {
+        $this->send('ava.thompson@example.com ORD-10001');
+
+        $response = $this->send('Actually use sophia.nguyen@example.com ORD-10003')
+            ->assertJsonPath('data.stage', 'awaiting_issue');
+
+        $this->assertStringContainsString('start a new chat', $this->assistantSaid($response)[0]);
+        $this->assertStringNotContainsString('Lamp', $this->assistantSaid($response)[0]);
+        $this->assertSame(Conversation::first()->customer->email, 'ava.thompson@example.com');
+    }
+
     public function test_failed_verification_reveals_nothing_and_hands_off_after_three_attempts(): void
     {
         $response = $this->send('grace.miller@example.com ORD-10001');

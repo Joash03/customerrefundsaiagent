@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import ChatHeader from './ChatHeader'
 import ChatPanel from './ChatPanel'
 
 /**
@@ -29,20 +30,14 @@ export default function ChatWidget({ open, onOpenChange }) {
     <>
       {open && (
         <section id="chat-widget" className="chat-widget" role="dialog" aria-modal="false" aria-labelledby="chat-widget-title">
-          <header className="chat-widget-header">
-            <div>
-              <h2 id="chat-widget-title" className="h6 mb-0">Support chat</h2>
-              <span className="small text-body-secondary">Usually answers in seconds</span>
-            </div>
-            <div className="d-flex gap-1">
-              <Link to="/support" className="btn chat-icon-btn" aria-label="Open chat in full page" onClick={() => onOpenChange(false)}>
-                <i className="bi bi-arrows-angle-expand" aria-hidden="true" />
-              </Link>
-              <button type="button" className="btn chat-icon-btn" aria-label="Close chat" onClick={() => onOpenChange(false)}>
-                <i className="bi bi-x-lg" aria-hidden="true" />
-              </button>
-            </div>
-          </header>
+          <ChatHeader titleId="chat-widget-title">
+            <Link to="/support" className="btn chat-icon-btn" aria-label="Open chat in full page" onClick={() => onOpenChange(false)}>
+              <i className="bi bi-arrows-angle-expand" aria-hidden="true" />
+            </Link>
+            <button type="button" className="btn chat-icon-btn" aria-label="Close chat" onClick={() => onOpenChange(false)}>
+              <i className="bi bi-x-lg" aria-hidden="true" />
+            </button>
+          </ChatHeader>
           <ChatPanel autoFocus />
         </section>
       )}

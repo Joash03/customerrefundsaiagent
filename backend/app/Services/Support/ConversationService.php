@@ -76,6 +76,13 @@ class ConversationService
         $this->addRiskFlags($conversation, $screened->flags);
         $this->replies[] = $conversation->messages()->create(['role' => ConversationMessage::ROLE_CUSTOMER, 'content' => $screened->message]);
 
+        if ($this->mentionsAnotherAccount($conversation, $screened->message)) {
+            $this->say($conversation, $this->copy->anotherAccount());
+            $conversation->save();
+
+            return $this->replies;
+        }
+
         match ($conversation->stage) {
             ConversationStage::AwaitingIdentity => $this->handleIdentity($conversation, $screened->message),
             ConversationStage::AwaitingIssue => $this->handleIssue($conversation, $screened->message),
@@ -86,6 +93,18 @@ class ConversationService
         $conversation->save();
 
         return $this->replies;
+    }
+
+    /**
+     * A verified chat stays bound to that customer; switching accounts needs a new chat.
+     */
+    private function mentionsAnotherAccount(Conversation $conversation, string $text): bool
+    {
+        if ($conversation->customer_id === null || ! preg_match(self::EMAIL_PATTERN, $text, $match)) {
+            return false;
+        }
+
+        return Str::lower($match[0]) !== $conversation->customer->email;
     }
 
     private function handleIdentity(Conversation $conversation, string $text): void

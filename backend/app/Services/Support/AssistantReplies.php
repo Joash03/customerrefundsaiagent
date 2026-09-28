@@ -43,6 +43,11 @@ class AssistantReplies
         return 'This conversation has been passed to our support team. Please start a new conversation if you need help with anything else.';
     }
 
+    public function anotherAccount(): string
+    {
+        return 'For your security, this chat is linked to the account you already verified. To get help with a different account, please start a new chat.';
+    }
+
     public function verified(Order $order): string
     {
         return "Thanks, {$order->customer->first_name}! I've found your order {$this->orderLine($order)}.\n\nWhat went wrong with your order?";
