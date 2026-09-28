@@ -127,6 +127,23 @@ class SupportAgentTest extends TestCase
         $this->assertFalse(RefundRequest::whereNotNull('conversation_id')->exists());
     }
 
+    public function test_submission_without_a_policy_check_is_refused(): void
+    {
+        $headphones = $this->itemId('Wireless Noise-Cancelling Headphones');
+        $this->script([
+            ['verify_customer', ['email' => 'ava.thompson@example.com', 'order_number' => 'ORD-10001']],
+            ['submit_refund_request', ['item_id' => $headphones, 'reason' => 'changed_mind', 'summary' => 'Return.', 'customer_confirmed' => true]],
+            'Why would you like to return them?',
+        ]);
+        $this->start();
+
+        $this->send('ava.thompson@example.com ORD-10001 I want to return it');
+
+        $this->assertFalse(RefundRequest::whereNotNull('conversation_id')->exists());
+        $tool = Conversation::first()->messages()->where('role', 'tool')->get()->last();
+        $this->assertStringContainsString('Check the refund policy', $tool->content);
+    }
+
     public function test_agent_cannot_act_on_another_customers_item(): void
     {
         $laptop = $this->itemId('UltraBook Pro 14 Laptop');
@@ -147,6 +164,7 @@ class SupportAgentTest extends TestCase
         $wallet = $this->itemId('Leather Bifold Wallet');
         $this->script([
             ['verify_customer', ['email' => 'amelia.scott@example.com', 'order_number' => 'ORD-10012']],
+            ['check_refund_policy', ['item_id' => $wallet, 'reason' => 'damaged']],
             'Sorry about that. Shall I submit a refund for the wallet?',
             ['submit_refund_request', ['item_id' => $wallet, 'reason' => 'damaged', 'summary' => 'Stitching came apart.', 'customer_confirmed' => true]],
             'Submitted.',

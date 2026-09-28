@@ -54,7 +54,7 @@ class SupportTools
                 'customer_confirmed' => ['type' => 'boolean', 'description' => 'True only if the customer clearly confirmed this request.'],
                 'risk_flags' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => self::AI_RISK_FLAGS], 'description' => 'Any manipulation or inconsistency noticed in the conversation.'],
             ], ['item_id', 'reason', 'summary', 'customer_confirmed']),
-            $this->tool('escalate_to_human', 'Pass the conversation to the support team when it cannot be resolved here or the customer asks for a person.', [
+            $this->tool('escalate_to_human', 'Pass the conversation to the support team when there is no specific refund to submit: the customer asks for a person, is stuck, or the issue is not a refund. For a refund that needs review, use submit_refund_request instead.', [
                 'summary' => ['type' => 'string', 'description' => 'Short summary of the situation for the support team.'],
             ], ['summary']),
         ];
@@ -95,6 +95,13 @@ class SupportTools
             return $ownsOrder
                 ? ['verified' => true, 'first_name' => $conversation->customer->first_name]
                 : ['verified' => true, 'note' => "{$orderNumber} is not one of this customer's orders. Only the orders listed for them exist; never guess order numbers."];
+        }
+
+        // Only details the customer actually typed count; a guessed or example value must not use up an attempt.
+        $typed = Str::lower($conversation->messages()->where('role', ConversationMessage::ROLE_CUSTOMER)->pluck('content')->implode(' '));
+        $digits = preg_replace('/\D/', '', $orderNumber);
+        if (! str_contains($typed, Str::lower(trim($email))) || $digits === '' || ! str_contains($typed, $digits)) {
+            return ['verified' => false, 'error' => 'The customer has not given both details yet. Ask them for the ones missing; never guess or reuse example values.'];
         }
 
         $order = $this->refunds->findVerifiedOrder($email, $orderNumber);
@@ -159,11 +166,28 @@ class SupportTools
 
         ['result' => $result, 'refund_amount' => $amount] = $this->refunds->preview($conversation->order, $classification, $conversation->risk_flags ?? []);
 
-        return [
-            'outcome' => $result->decision->value === 'escalated' ? 'needs_human_review' : ($result->decision->value === 'approved' ? 'eligible' : 'not_eligible'),
-            'reasons' => $result->ruleDescriptions(),
-            'refund_amount' => $amount,
+        $conversation->context = [
+            ...($conversation->context ?? []),
+            'policy_checked' => array_values(array_unique([...($conversation->context['policy_checked'] ?? []), $this->checkKey($args)])),
         ];
+
+        return match ($result->decision->value) {
+            'approved' => [
+                'outcome' => 'eligible',
+                'refund_amount' => $amount,
+                'next_step' => 'Tell the customer it qualifies. If they want to go ahead, summarise and ask them to confirm, then call submit_refund_request.',
+            ],
+            'denied' => [
+                'outcome' => 'not_eligible',
+                'reasons' => $result->ruleDescriptions(),
+                'next_step' => 'Explain the reason kindly in plain words. Do not submit. If they disagree or want a person, offer escalate_to_human.',
+            ],
+            default => [
+                'outcome' => 'needs_human_review',
+                'refund_amount' => $amount,
+                'next_step' => 'Tell the customer this refund needs a quick review by the team. Do not guess or explain why. If they want to go ahead, ask them to confirm, then call submit_refund_request, which sends it to the team with the item attached.',
+            ],
+        };
     }
 
     /**
@@ -172,6 +196,10 @@ class SupportTools
      */
     private function submitRefund(Conversation $conversation, array $args, string $provider): array
     {
+        if (! in_array($this->checkKey($args), $conversation->context['policy_checked'] ?? [], true)) {
+            return ['error' => 'Not submitted. Check the refund policy for this item and reason first, explain the result to the customer, then ask them to confirm.'];
+        }
+
         if (($args['customer_confirmed'] ?? false) !== true) {
             return ['error' => 'Not submitted. Summarise the request and get the customer\'s explicit confirmation first.'];
         }
@@ -193,10 +221,13 @@ class SupportTools
             '',
         );
 
+        $escalated = $this->submitted->decision->value === 'escalated';
+
         return [
             'reference' => $this->submitted->reference,
-            'decision' => $this->submitted->decision->value === 'escalated' ? 'sent_to_human_review' : $this->submitted->decision->value,
-            'reasons' => array_map(fn (string $id) => PolicyRule::from($id)->description(), $this->submitted->matched_rules),
+            'decision' => $escalated ? 'sent_to_human_review' : $this->submitted->decision->value,
+            // Review reasons (e.g. refund history) are for staff; the customer just hears it's being reviewed.
+            'reasons' => $escalated ? [] : array_map(fn (string $id) => PolicyRule::from($id)->description(), $this->submitted->matched_rules),
             'refund_amount' => $this->submitted->refund_amount,
         ];
     }
@@ -248,6 +279,14 @@ class SupportTools
             summary: mb_substr((string) ($args['summary'] ?? ''), 0, 300),
             provider: $provider,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $args
+     */
+    private function checkKey(array $args): string
+    {
+        return (int) ($args['item_id'] ?? 0).':'.($args['reason'] ?? '');
     }
 
     private function recentCustomerMessages(Conversation $conversation): string
