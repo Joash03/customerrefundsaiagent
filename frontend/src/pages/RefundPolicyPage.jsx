@@ -1,4 +1,4 @@
-import { Link, useOutletContext } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import { useRefundPolicy } from '../hooks/useRefundPolicy'
 
 export default function RefundPolicyPage() {
@@ -49,19 +49,18 @@ export default function RefundPolicyPage() {
   ]
 
   return (
-    <div className="container py-4 py-lg-5">
+    <div className="container py-5">
       <div className="row g-4">
-        <nav className="col-lg-3 d-none d-lg-block" aria-label="On this page">
+        <nav className="col-lg-3 d-none d-lg-block pt-2" aria-label="On this page">
           <div className="policy-toc">
-            <h2 className="h6 text-uppercase small text-body-secondary">On this page</h2>
             <ul className="list-unstyled small">
               {sections.map((section) => <li key={section.id} className="mb-2"><a href={`#${section.id}`}>{section.title}</a></li>)}
             </ul>
           </div>
         </nav>
 
-        <article className="col-lg-9">
-          <h1 className="h2 mb-2">Refund policy</h1>
+        <article className="col-lg-9 policy-article">
+          <h1 className="display-6 fw-semibold mb-3">Refund policy</h1>
           <p className="lead text-body-secondary">We want you to be happy with your order. Here is how refunds work.</p>
           {error && <div className="alert alert-warning" role="alert">We couldn&apos;t load the latest policy values. Please refresh the page.</div>}
 
@@ -73,15 +72,14 @@ export default function RefundPolicyPage() {
             </section>
           ))}
 
-          <div className="card bg-primary-subtle border-0 mt-4">
-            <div className="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div className="policy-section">
+            <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
               <div>
-                <h2 className="h6 mb-1">Ready to request a refund?</h2>
-                <p className="small mb-0">Have your email address and order number ready.</p>
+                <h2 className="h5 mb-1">Ready to request a refund?</h2>
+                <p className="text-body-secondary mb-0">Have your email address and order number ready.</p>
               </div>
               <div className="d-flex gap-2">
-                <button type="button" className="btn btn-primary" onClick={openChat}>Chat with support</button>
-                <Link to="/support" className="btn btn-outline-primary">Open support page</Link>
+                <button type="button" className="btn btn-primary" onClick={openChat}>Start a chat</button>
               </div>
             </div>
           </div>

@@ -1,8 +1,8 @@
 const VARIANTS = {
-  approved: { label: 'Approved', className: 'text-bg-success', icon: 'bi-check-circle-fill' },
-  denied: { label: 'Denied', className: 'text-bg-danger', icon: 'bi-x-circle-fill' },
-  escalated: { label: 'Escalated', className: 'text-bg-warning', icon: 'bi-exclamation-triangle-fill' },
-  awaiting: { label: 'Awaiting review', className: 'text-bg-warning', icon: 'bi-hourglass-split' },
+  approved: { label: 'Approved', icon: 'bi-check-circle-fill' },
+  denied: { label: 'Denied', icon: 'bi-x-circle-fill' },
+  escalated: { label: 'Escalated', icon: 'bi-exclamation-circle-fill' },
+  awaiting: { label: 'Awaiting review', icon: 'bi-hourglass-split' },
 }
 
 /**
@@ -11,10 +11,11 @@ const VARIANTS = {
  * @param {{ decision: 'approved'|'denied'|'escalated'|'awaiting', label?: string }} props
  */
 export default function DecisionBadge({ decision, label }) {
-  const variant = VARIANTS[decision] ?? VARIANTS.escalated
+  const key = VARIANTS[decision] ? decision : 'escalated'
+  const variant = VARIANTS[key]
 
   return (
-    <span className={`badge ${variant.className} d-inline-flex align-items-center gap-1`}>
+    <span className={`status-badge status-${key}`}>
       <i className={`bi ${variant.icon}`} aria-hidden="true" />
       {label ?? variant.label}
     </span>

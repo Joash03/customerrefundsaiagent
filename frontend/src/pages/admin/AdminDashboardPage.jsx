@@ -7,10 +7,10 @@ import { formatDateTime, formatMoney, humanize } from '../../utils/format'
 
 const STATS = [
   { key: 'total', label: 'Total requests', icon: 'bi-inbox' },
-  { key: 'approved', label: 'Approved', icon: 'bi-check-circle', tone: 'success' },
-  { key: 'denied', label: 'Denied', icon: 'bi-x-circle', tone: 'danger' },
-  { key: 'awaiting_review', label: 'Awaiting review', icon: 'bi-hourglass-split', tone: 'warning' },
-  { key: 'ai_flagged', label: 'AI risk flags', icon: 'bi-shield-exclamation', tone: 'danger' },
+  { key: 'approved', label: 'Approved', icon: 'bi-check-circle' },
+  { key: 'denied', label: 'Denied', icon: 'bi-x-circle' },
+  { key: 'awaiting_review', label: 'Awaiting review', icon: 'bi-hourglass-split' },
+  { key: 'ai_flagged', label: 'AI risk flags', icon: 'bi-shield-exclamation' },
 ]
 
 export default function AdminDashboardPage() {
@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
           <h1 className="h3 mb-0">Refund requests</h1>
           <p className="text-body-secondary mb-0">Decisions, AI analysis and escalations awaiting review.</p>
         </div>
-        <button type="button" className="btn btn-outline-primary" onClick={refresh} disabled={list.loading}>
+        <button type="button" className="btn btn-outline-primary btn-sm" onClick={refresh} disabled={list.loading}>
           <i className="bi bi-arrow-clockwise me-1" aria-hidden="true" />
           Refresh
         </button>
@@ -62,13 +62,13 @@ export default function AdminDashboardPage() {
       <div className="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
         {STATS.map((stat) => (
           <div className="col" key={stat.key}>
-            <StatCard label={stat.label} value={stats.data?.[stat.key]} icon={stat.icon} tone={stat.tone} />
+            <StatCard label={stat.label} value={stats.data?.[stat.key]} icon={stat.icon} />
           </div>
         ))}
       </div>
 
       <div className="card">
-        <div className="card-header bg-white">
+        <div className="card-header border-bottom">
           <div className="row g-2 align-items-end">
             <div className="col-md-5">
               <label htmlFor="search" className="form-label small fw-semibold">Search</label>
@@ -114,9 +114,9 @@ export default function AdminDashboardPage() {
         {list.error && <div className="alert alert-danger m-3" role="alert">{list.error.message}</div>}
 
         <div className="table-responsive">
-          <table className="table table-hover table-striped align-middle mb-0" aria-busy={list.loading}>
+          <table className="table table-hover align-middle mb-0" aria-busy={list.loading}>
             <caption className="visually-hidden">Refund requests, newest first</caption>
-            <thead className="table-light">
+            <thead>
               <tr>
                 <th scope="col">Reference</th>
                 <th scope="col">Customer</th>
@@ -140,13 +140,13 @@ export default function AdminDashboardPage() {
               )}
               {requests.map((request) => (
                 <tr key={request.id}>
-                  <td><Link to={`/admin/requests/${request.id}`} className="font-monospace fw-semibold">{request.reference}</Link></td>
+                  <td className="text-nowrap"><Link to={`/admin/requests/${request.id}`} className="fw-semibold">{request.reference}</Link></td>
                   <td>
                     <div>{request.customer?.name ?? <span className="text-body-secondary">Unverified</span>}</div>
                     <div className="small text-body-secondary">{request.submitted_email}</div>
                   </td>
                   <td>
-                    <div className="font-monospace small">{request.submitted_order_number}</div>
+                    <div className="small">{request.submitted_order_number}</div>
                     <div className="small text-body-secondary">{request.item?.product_name ?? '—'}</div>
                   </td>
                   <td>
@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {meta && meta.last_page > 1 && (
-          <nav className="card-footer bg-white d-flex justify-content-between align-items-center" aria-label="Pagination">
+          <nav className="card-footer d-flex justify-content-between align-items-center" aria-label="Pagination">
             <span className="small text-body-secondary">Page {meta.current_page} of {meta.last_page} · {meta.total} requests</span>
             <div className="btn-group">
               <button type="button" className="btn btn-outline-secondary btn-sm" disabled={meta.current_page <= 1} onClick={() => updateParam('page', String(meta.current_page - 1))}>Previous</button>

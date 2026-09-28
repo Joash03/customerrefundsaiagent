@@ -1,16 +1,14 @@
 /**
- * @param {{ label: string, value: number|undefined, icon: string, tone?: string }} props
+ * @param {{ label: string, value: number|undefined, icon: string }} props
  */
-export default function StatCard({ label, value, icon, tone = 'primary' }) {
+export default function StatCard({ label, value, icon }) {
   return (
-    <div className="card h-100">
-      <div className="card-body d-flex align-items-center gap-3">
-        <i className={`bi ${icon} fs-4 text-${tone}`} aria-hidden="true" />
-        <div>
-          <div className="small text-body-secondary">{label}</div>
-          <div className="fs-4 fw-semibold text-tabular">{value ?? '—'}</div>
-        </div>
+    <div className="stat-card">
+      <div className="d-flex justify-content-between align-items-center small text-body-secondary mb-1">
+        {label}
+        <i className={`bi ${icon}`} aria-hidden="true" />
       </div>
+      <div className="fs-3 fw-semibold text-tabular">{value ?? '—'}</div>
     </div>
   )
 }

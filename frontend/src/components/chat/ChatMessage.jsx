@@ -29,15 +29,14 @@ export default function ChatMessage({ message }) {
       <div className={`chat-bubble chat-bubble-assistant${decision ? ` chat-bubble-${decision}` : ''}`}>
         <span className="visually-hidden">Support assistant: </span>
         {decision && (
-          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <DecisionBadge decision={decision} />
-            <strong className="small">{DECISION_HEADINGS[decision]}</strong>
+          <div className="mb-2">
+            <DecisionBadge decision={decision} label={DECISION_HEADINGS[decision]} />
           </div>
         )}
         {content}
         {reference && (
           <div className="small text-body-secondary mt-2">
-            Reference <span className="font-monospace fw-semibold">{reference}</span>
+            Reference <span className="fw-semibold">{reference}</span>
           </div>
         )}
       </div>

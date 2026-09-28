@@ -42,7 +42,7 @@ export default function RefundRequestDetailPage() {
         <i className="bi bi-arrow-left me-1" aria-hidden="true" />All requests
       </Link>
       <div className="d-flex flex-wrap align-items-center gap-3 mb-4">
-        <h1 className="h3 mb-0 font-monospace">{request.reference}</h1>
+        <h1 className="h3 mb-0">{request.reference}</h1>
         <RefundStatusBadges request={request} />
         <span className="small text-body-secondary">{formatDateTime(request.created_at)}</span>
       </div>
@@ -72,7 +72,7 @@ export default function RefundRequestDetailPage() {
                   <div className="d-flex flex-wrap gap-1" aria-label="Risk flags">
                     {ai.flags.length === 0 && <span className="small text-body-secondary">No risk flags raised.</span>}
                     {ai.flags.map((flag) => (
-                      <span key={flag} className="badge text-bg-danger">
+                      <span key={flag} className="status-badge status-denied">
                         <i className="bi bi-shield-exclamation me-1" aria-hidden="true" />{humanize(flag)}
                       </span>
                     ))}
@@ -92,7 +92,7 @@ export default function RefundRequestDetailPage() {
               <ul className="list-unstyled mb-3">
                 {request.rules.map((rule) => (
                   <li key={rule.id} className="d-flex gap-2 mb-1">
-                    <span className="badge text-bg-secondary font-monospace align-self-start">{rule.id}</span>
+                    <span className="status-badge bg-body-secondary text-body align-self-start">{rule.id}</span>
                     <span className="small">{rule.description}</span>
                   </li>
                 ))}

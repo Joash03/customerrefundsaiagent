@@ -32,13 +32,13 @@ export default function ChatWidget({ open, onOpenChange }) {
           <header className="chat-widget-header">
             <div>
               <h2 id="chat-widget-title" className="h6 mb-0">Support chat</h2>
-              <span className="small opacity-75">Refunds and order problems</span>
+              <span className="small text-body-secondary">Usually answers in seconds</span>
             </div>
             <div className="d-flex gap-1">
-              <Link to="/support" className="btn btn-sm btn-link text-white chat-icon-btn" aria-label="Open chat in full page" onClick={() => onOpenChange(false)}>
+              <Link to="/support" className="btn chat-icon-btn" aria-label="Open chat in full page" onClick={() => onOpenChange(false)}>
                 <i className="bi bi-arrows-angle-expand" aria-hidden="true" />
               </Link>
-              <button type="button" className="btn btn-sm btn-link text-white chat-icon-btn" aria-label="Close chat" onClick={() => onOpenChange(false)}>
+              <button type="button" className="btn chat-icon-btn" aria-label="Close chat" onClick={() => onOpenChange(false)}>
                 <i className="bi bi-x-lg" aria-hidden="true" />
               </button>
             </div>

@@ -79,7 +79,7 @@ export default function ChatPanel({ autoFocus = false }) {
       )}
 
       {error && (
-        <div className="alert alert-danger py-2 px-3 mx-3 mb-2 small" role="alert">
+        <div className="alert alert-danger py-2 px-3 mx-3 mb-2 small rounded-3" role="alert">
           {error}
           {status === 'error' && <button type="button" className="btn btn-link btn-sm p-0 ms-2 align-baseline" onClick={startNew}>Try again</button>}
         </div>
@@ -93,11 +93,10 @@ export default function ChatPanel({ autoFocus = false }) {
       ) : (
         <form className="chat-composer" onSubmit={handleSubmit}>
           <label htmlFor="chat-input" className="visually-hidden">Type your message</label>
-          <div className="d-flex gap-2 align-items-end">
+          <div className="chat-input-group">
             <textarea
               ref={inputRef}
               id="chat-input"
-              className="form-control"
               rows={1}
               maxLength={MAX_LENGTH}
               placeholder="Type your message…"
@@ -111,7 +110,7 @@ export default function ChatPanel({ autoFocus = false }) {
             </button>
           </div>
           <div className="d-flex justify-content-between mt-1">
-            <span className="chat-hint">Enter to send · Shift+Enter for a new line</span>
+            <span className="chat-hint">Press Enter to send</span>
             <button type="button" className="btn btn-link btn-sm p-0 chat-hint" onClick={startNew} disabled={sending}>New conversation</button>
           </div>
         </form>
