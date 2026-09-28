@@ -7,22 +7,22 @@ const ChatContext = createContext(null)
 const storage = {
   get: () => {
     try {
-      return localStorage.getItem(STORAGE_KEY)
+      return sessionStorage.getItem(STORAGE_KEY)
     } catch {
       return null
     }
   },
   set: (id) => {
     try {
-      localStorage.setItem(STORAGE_KEY, id)
+      sessionStorage.setItem(STORAGE_KEY, id)
     } catch {
-      // Storage unavailable (private mode): the conversation simply won't survive a reload.
+      // Storage unavailable: the conversation simply will not survive a reload.
     }
   },
 }
 
 /**
- * One support conversation shared by the floating widget and the /support page,
+ * One support conversation per browser tab, shared by the floating widget and the /support page,
  * so a customer can move between them without losing their place.
  *
  * @param {{ children: import('react').ReactNode }} props

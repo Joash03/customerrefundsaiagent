@@ -1,18 +1,20 @@
-$primary: #2D4EA2;
+$primary: #111111;
 $font-family-sans-serif: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 $headings-font-family: "Rubik", $font-family-sans-serif;
 $headings-font-weight: 600;
-$body-bg: #f5f7fb;
-$body-color: #1e2533;
+$body-bg: #f6f6f6;
+$body-color: #111111;
 $border-radius: .5rem;
 $enable-shadows: false;
 
 @import "bootstrap/scss/bootstrap";
 
 // ---------- Base ----------
+// Two-tone ring so focus stays visible on both white and black surfaces.
 :focus-visible {
-  outline: 3px solid rgba($primary, .55);
-  outline-offset: 2px;
+  outline: 2px solid $white;
+  outline-offset: 0;
+  box-shadow: 0 0 0 4px $black !important;
 }
 
 .navbar-brand, .display-6 {
@@ -96,7 +98,7 @@ $enable-shadows: false;
   width: 2.75rem;
   height: 2.75rem;
   border-radius: .5rem;
-  background: tint-color($primary, 88%);
+  background: $gray-200;
   color: $primary;
   font-size: 1.25rem;
 }
