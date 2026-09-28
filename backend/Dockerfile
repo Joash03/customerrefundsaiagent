@@ -25,7 +25,7 @@ RUN composer dump-autoload --optimize --no-dev \
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 # Strip Windows line endings in case the repo was checked out with CRLF.
-RUN sed -i 's/$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
 ENTRYPOINT ["entrypoint.sh"]
