@@ -21,7 +21,7 @@ class ConversationResource extends JsonResource
         return [
             'id' => $this->token,
             'stage' => $this->stage->value,
-            'messages' => ConversationMessageResource::collection($this->whenLoaded('messages')),
+            'messages' => ConversationMessageResource::collection($this->whenLoaded('messages', fn () => $this->messages->filter->isVisibleToCustomer()->values())),
         ];
     }
 }

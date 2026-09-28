@@ -110,11 +110,23 @@ export default function RefundRequestDetailPage() {
                 <ol className="transcript list-unstyled mb-0" tabIndex={0} aria-label="Chat transcript, scrollable">
                   {request.transcript.map((message, index) => (
                     <li key={`${message.created_at}-${index}`} className="mb-2">
-                      <span className={`small fw-semibold ${message.role === 'customer' ? 'text-primary' : 'text-body-secondary'}`}>
-                        {message.role === 'customer' ? 'Customer' : 'Assistant'}
-                      </span>
-                      <span className="small text-body-secondary ms-2">{formatDateTime(message.created_at)}</span>
-                      <p className="small mb-0 text-prewrap">{message.content}</p>
+                      {message.tool ? (
+                        <details className="small">
+                          <summary className="text-body-secondary">
+                            <i className="bi bi-gear me-1" aria-hidden="true" />
+                            Agent used <span className="fw-semibold">{message.tool.name}</span>
+                          </summary>
+                          <pre className="payload rounded p-2 mt-1 mb-0">{JSON.stringify({ input: message.tool.arguments, result: JSON.parse(message.content) }, null, 2)}</pre>
+                        </details>
+                      ) : (
+                        <>
+                          <span className={`small fw-semibold ${message.role === 'customer' ? 'text-primary' : 'text-body-secondary'}`}>
+                            {message.role === 'customer' ? 'Customer' : 'Assistant'}
+                          </span>
+                          <span className="small text-body-secondary ms-2">{formatDateTime(message.created_at)}</span>
+                          <p className="small mb-0 text-prewrap">{message.content}</p>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ol>

@@ -7,7 +7,7 @@ use App\Http\Requests\SendConversationMessageRequest;
 use App\Http\Resources\ConversationMessageResource;
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
-use App\Services\Support\ConversationService;
+use App\Services\Support\SupportChat;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
  */
 class ConversationController extends Controller
 {
-    public function store(ConversationService $service): JsonResponse
+    public function store(SupportChat $service): JsonResponse
     {
         $conversation = $service->start()->load('messages');
 
@@ -27,7 +27,7 @@ class ConversationController extends Controller
         return new ConversationResource($conversation->load('messages'));
     }
 
-    public function sendMessage(SendConversationMessageRequest $request, Conversation $conversation, ConversationService $service): JsonResponse
+    public function sendMessage(SendConversationMessageRequest $request, Conversation $conversation, SupportChat $service): JsonResponse
     {
         $messages = $service->reply($conversation, $request->validated('content'));
 

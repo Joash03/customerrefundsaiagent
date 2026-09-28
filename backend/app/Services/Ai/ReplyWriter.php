@@ -68,7 +68,7 @@ class ReplyWriter
         return $decision === RefundDecision::Approved || ! preg_match(self::APPROVAL_LANGUAGE, $reply);
     }
 
-    private function template(RefundDecision $decision, ?string $firstName, string $reference): string
+    public function template(RefundDecision $decision, ?string $firstName, string $reference): string
     {
         $greeting = $firstName ? "Hi {$firstName}, " : 'Hi, ';
 

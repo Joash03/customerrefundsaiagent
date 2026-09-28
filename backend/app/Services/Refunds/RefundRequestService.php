@@ -84,6 +84,20 @@ class RefundRequestService
     }
 
     /**
+     * Run the policy without recording anything, so the agent can explain the likely outcome first.
+     *
+     * @param  list<string>  $inputFlags
+     * @return array{result: PolicyResult, refund_amount: ?float}
+     */
+    public function preview(Order $verifiedOrder, Classification $classification, array $inputFlags): array
+    {
+        $item = $classification->itemId ? $this->findCustomerItem($verifiedOrder, $classification->itemId) : null;
+        $context = $this->buildContext($item?->order ?? $verifiedOrder, $item, $classification, $inputFlags);
+
+        return ['result' => $this->policy->evaluate($context, now()), 'refund_amount' => $context->refundAmount];
+    }
+
+    /**
      * @param  list<string>  $inputFlags
      * @param  array<string, mixed>  $attributes
      */

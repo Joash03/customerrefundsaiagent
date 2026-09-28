@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\PolicyRule;
+use App\Models\ConversationMessage;
 use App\Models\RefundRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -60,11 +61,16 @@ class RefundRequestResource extends JsonResource
                 'reviewed_at' => $this->reviewed_at->toIso8601String(),
                 'note' => $this->review_note,
             ] : null,
-            'transcript' => $this->whenLoaded('conversation', fn () => $this->conversation?->messages->map(fn ($message) => [
-                'role' => $message->role,
-                'content' => $message->content,
-                'created_at' => $message->created_at->toIso8601String(),
-            ])),
+            'transcript' => $this->whenLoaded('conversation', fn () => $this->conversation?->messages
+                ->filter(fn (ConversationMessage $message) => $message->role === ConversationMessage::ROLE_TOOL || $message->isVisibleToCustomer())
+                ->map(fn (ConversationMessage $message) => [
+                    'role' => $message->role,
+                    'content' => $message->content,
+                    'tool' => $message->role === ConversationMessage::ROLE_TOOL
+                        ? ['name' => $message->meta['name'] ?? null, 'arguments' => $message->meta['arguments'] ?? []]
+                        : null,
+                    'created_at' => $message->created_at->toIso8601String(),
+                ])->values()),
             'audit_logs' => $this->whenLoaded('auditLogs', fn () => $this->auditLogs->map(fn ($log) => [
                 'step' => $log->step,
                 'payload' => $log->payload,

@@ -13,6 +13,9 @@ class ConversationMessage extends Model
 
     public const ROLE_ASSISTANT = 'assistant';
 
+    /** Internal record of an agent tool call and its result; never shown to the customer. */
+    public const ROLE_TOOL = 'tool';
+
     protected $fillable = [
         'role',
         'content',
@@ -24,6 +27,14 @@ class ConversationMessage extends Model
         return [
             'meta' => 'array',
         ];
+    }
+
+    public function isVisibleToCustomer(): bool
+    {
+        // Tool results and the text a model attaches to its tool calls are internal working, not replies.
+        return $this->role !== self::ROLE_TOOL
+            && empty($this->meta['tool_calls'])
+            && trim($this->content) !== '';
     }
 
     public function conversation(): BelongsTo
