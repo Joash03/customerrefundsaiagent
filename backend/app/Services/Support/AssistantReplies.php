@@ -16,7 +16,7 @@ class AssistantReplies
 {
     public function greeting(): string
     {
-        return "Hi, I'm the support assistant. I can help with refunds and problems with an order.\n\nTo get started, please share the email address and order number from your order confirmation (it looks like ORD-12345).";
+        return "Hi there! What can I help you with today?\n\nIf it's about an order, I'll need the email address and order number from your confirmation email (it looks like ORD-12345).";
     }
 
     public function askForMissingIdentity(?string $email, ?string $orderNumber): string

@@ -63,7 +63,8 @@ class SupportAgent
 
             if ($toolCalls === []) {
                 // Some models leave stage directions such as "(Waiting for user response)" in the text.
-                $reply = trim(preg_replace('/\s*\((waiting|awaiting)[^)]*\)/i', '', (string) $message['content']) ?? '');
+                // The chat shows plain text, so markdown emphasis is removed too.
+                $reply = trim(preg_replace(['/\s*\((waiting|awaiting)[^)]*\)/i', '/\*\*(.+?)\*\*/s'], ['', '$1'], (string) $message['content']) ?? '');
                 $visible[] = $this->finish($conversation, $reply !== '' ? $reply : self::UNAVAILABLE);
 
                 return $visible;

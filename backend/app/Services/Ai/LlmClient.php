@@ -86,7 +86,7 @@ class LlmClient
                     'tools' => $tools,
                     'tool_choice' => 'auto',
                     // Replies are short; the cap stops runaway generations and keeps within rate limits.
-                    'max_tokens' => 700,
+                    'max_tokens' => 1500,
                 ])->json('choices.0.message');
 
                 if (is_array($message) && (filled($message['content'] ?? null) || filled($message['tool_calls'] ?? null))) {
