@@ -11,12 +11,6 @@ export default function HomePage() {
   const { openChat } = useOutletContext()
   const { windowDays, reviewLimit } = useRefundPolicy()
 
-  const topics = [
-    { icon: 'bi-box-seam', title: 'Damaged or faulty item', text: 'Something arrived broken or stopped working.', action: openChat, label: 'Start a chat' },
-    { icon: 'bi-arrow-left-right', title: 'Wrong item received', text: 'Wrong product, size or colour in your parcel.', action: openChat, label: 'Start a chat' },
-    { icon: 'bi-arrow-counterclockwise', title: 'Returns and refunds', text: `Changed your mind? Most items can be refunded within ${windowDays} days.`, to: '/refunds', label: 'Read the refund policy' },
-  ]
-
   const faqs = [
     { q: 'How long do I have to request a refund?', a: `You can request a refund within ${windowDays} days of delivery.` },
     { q: 'Can I get a refund on a final sale item?', a: 'Final sale items are not refundable. If a final sale item arrived damaged or incorrect, our support team will review it.' },
@@ -43,29 +37,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container py-5" aria-labelledby="topics-heading">
-        <h2 id="topics-heading" className="h4 mb-4">Popular topics</h2>
-        <div className="row g-4">
-          {topics.map((topic) => (
-            <div className="col-md-4" key={topic.title}>
-              <div className="card h-100 topic-card">
-                <div className="card-body d-flex flex-column">
-                  <span className="icon-tile mb-3" aria-hidden="true"><i className={`bi ${topic.icon}`} /></span>
-                  <h3 className="h6">{topic.title}</h3>
-                  <p className="text-body-secondary small flex-grow-1">{topic.text}</p>
-                  {topic.to ? (
-                    <Link to={topic.to} className="btn btn-outline-primary align-self-start">{topic.label}</Link>
-                  ) : (
-                    <button type="button" className="btn btn-outline-primary align-self-start" onClick={topic.action}>{topic.label}</button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-white border-top border-bottom" aria-labelledby="steps-heading">
+      <section className="bg-white border-bottom" aria-labelledby="steps-heading">
         <div className="container py-5">
           <h2 id="steps-heading" className="h4 mb-4">How refunds work</h2>
           <ol className="row g-4 list-unstyled mb-0">

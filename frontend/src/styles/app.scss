@@ -92,26 +92,6 @@ $enable-shadows: false;
   }
 }
 
-.icon-tile {
-  display: inline-grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: .5rem;
-  background: $gray-200;
-  color: $primary;
-  font-size: 1.25rem;
-}
-
-.topic-card {
-  border-color: $border-color;
-  transition: border-color .15s ease;
-
-  &:hover {
-    border-color: $primary;
-  }
-}
-
 .step-number {
   flex: 0 0 auto;
   display: inline-grid;
