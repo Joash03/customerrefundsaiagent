@@ -60,6 +60,11 @@ class RefundRequestResource extends JsonResource
                 'reviewed_at' => $this->reviewed_at->toIso8601String(),
                 'note' => $this->review_note,
             ] : null,
+            'transcript' => $this->whenLoaded('conversation', fn () => $this->conversation?->messages->map(fn ($message) => [
+                'role' => $message->role,
+                'content' => $message->content,
+                'created_at' => $message->created_at->toIso8601String(),
+            ])),
             'audit_logs' => $this->whenLoaded('auditLogs', fn () => $this->auditLogs->map(fn ($log) => [
                 'step' => $log->step,
                 'payload' => $log->payload,

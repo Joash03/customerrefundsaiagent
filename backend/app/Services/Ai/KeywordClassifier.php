@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Enums\RefundReason;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -14,16 +15,17 @@ use Illuminate\Support\Str;
 class KeywordClassifier
 {
     private const REASON_KEYWORDS = [
-        'damaged' => ['damaged', 'broken', 'cracked', 'defective', 'faulty', 'torn', 'scratched', 'dented', 'not working', 'stopped working', 'smashed'],
-        'wrong_item' => ['wrong item', 'wrong size', 'wrong colour', 'wrong color', 'incorrect', 'not what i ordered', 'different item', 'sent the wrong'],
+        'damaged' => ['damaged', 'broken', 'cracked', 'defective', 'faulty', 'torn', 'scratched', 'dented', 'not working', 'stopped working', 'smashed', 'shattered', 'leaking', 'chipped'],
+        'wrong_item' => ['wrong item', 'wrong size', 'wrong colour', 'wrong color', 'incorrect', 'not what i ordered', 'different item', 'sent the wrong', 'instead of'],
         'not_received' => ['never arrived', 'not received', "didn't receive", 'did not receive', 'never received', 'missing package', 'lost package'],
-        'changed_mind' => ['changed my mind', "don't want", 'do not want', "don't need", 'no longer need', "doesn't fit", 'does not fit', 'not needed'],
+        'changed_mind' => ['changed my mind', "don't want", 'do not want', "don't need", 'no longer need', "doesn't fit", 'does not fit', 'not needed', "doesn't suit", 'does not suit'],
     ];
 
     /**
+     * @param  Collection<int, Order>  $orders  The verified customer's orders; the first is the one in focus.
      * @param  list<string>  $inputFlags
      */
-    public function classify(string $message, Order $order, array $inputFlags): Classification
+    public function classify(string $message, Collection $orders, array $inputFlags): Classification
     {
         $text = Str::lower($message);
 
@@ -37,7 +39,7 @@ class KeywordClassifier
         $reason = count($reasons) === 1 ? $reasons[0] : RefundReason::Other;
 
         return new Classification(
-            itemId: $this->matchItem($text, $order)?->id,
+            itemId: $this->matchItem($text, $orders)?->id,
             reason: $reason,
             confidence: count($reasons) === 1 ? 0.7 : 0.3,
             flags: $inputFlags === [] ? [] : ['injection_attempt'],
@@ -48,18 +50,23 @@ class KeywordClassifier
         );
     }
 
-    private function matchItem(string $text, Order $order): ?OrderItem
+    /**
+     * @param  Collection<int, Order>  $orders
+     */
+    private function matchItem(string $text, Collection $orders): ?OrderItem
     {
-        if ($order->items->count() === 1) {
-            return $order->items->first();
-        }
-
-        $matches = $order->items->filter(function (OrderItem $item) use ($text) {
+        $matches = $orders->flatMap->items->filter(function (OrderItem $item) use ($text) {
             $words = array_filter(explode(' ', Str::lower($item->product_name)), fn (string $word) => strlen($word) > 3);
 
             return Str::contains($text, $words);
         });
 
-        return $matches->count() === 1 ? $matches->first() : null;
+        if ($matches->count() === 1) {
+            return $matches->first();
+        }
+
+        $focusItems = $orders->first()?->items ?? collect();
+
+        return $matches->isEmpty() && $focusItems->count() === 1 ? $focusItems->first() : null;
     }
 }

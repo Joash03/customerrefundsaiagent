@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RefundRequest extends Model
 {
     protected $fillable = [
+        'conversation_id',
         'reference',
         'customer_id',
         'order_id',
@@ -47,6 +48,11 @@ class RefundRequest extends Model
     public function isAwaitingReview(): bool
     {
         return $this->decision === RefundDecision::Escalated && $this->final_decision === null;
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
     }
 
     public function customer(): BelongsTo

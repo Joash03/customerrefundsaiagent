@@ -33,7 +33,7 @@ class RefundRequestController extends Controller
 
     public function show(RefundRequest $refundRequest): RefundRequestResource
     {
-        return new RefundRequestResource($refundRequest->load(['customer', 'order', 'orderItem', 'reviewer', 'auditLogs']));
+        return new RefundRequestResource($refundRequest->load(['customer', 'order', 'orderItem', 'reviewer', 'auditLogs', 'conversation.messages']));
     }
 
     public function review(ReviewRefundRequestRequest $request, RefundRequest $refundRequest, RefundReviewService $service): RefundRequestResource
@@ -45,6 +45,6 @@ class RefundRequestController extends Controller
             $request->validated('note'),
         );
 
-        return new RefundRequestResource($reviewed->load(['customer', 'order', 'orderItem', 'reviewer', 'auditLogs']));
+        return new RefundRequestResource($reviewed->load(['customer', 'order', 'orderItem', 'reviewer', 'auditLogs', 'conversation.messages']));
     }
 }

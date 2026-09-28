@@ -3,6 +3,7 @@
 namespace App\Services\Refunds;
 
 use App\Enums\RefundDecision;
+use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\RefundRequest;
@@ -15,6 +16,7 @@ use Illuminate\Support\Str;
 
 /**
  * Pipeline: screen input -> verify order -> AI classification -> policy decision -> AI reply -> persist + audit.
+ * Used directly by the one-shot API and, after the chat has gathered the facts, by the conversation flow.
  */
 class RefundRequestService
 {
@@ -31,7 +33,6 @@ class RefundRequestService
     public function submit(string $email, string $orderNumber, string $message): RefundRequest
     {
         $this->audit = [];
-        $reference = 'RF-'.Str::upper(Str::random(8));
 
         $screened = $this->guard->screen($message);
         $this->log('input_screened', ['flags' => $screened->flags, 'patterns' => $screened->matchedPatterns]);
@@ -40,23 +41,58 @@ class RefundRequestService
         $this->log('order_verified', ['verified' => $order !== null]);
 
         $classification = null;
-        $item = null;
-
         if ($order !== null) {
-            ['classification' => $classification, 'failures' => $failures] = $this->classifier->classify($screened->message, $order, $screened->flags);
-            $item = $order->items->firstWhere('id', $classification->itemId);
-            $this->log('ai_classified', [
-                'provider' => $classification->provider,
-                'reason' => $classification->reason->value,
-                'confidence' => $classification->confidence,
-                'item_id' => $classification->itemId,
-                'flags' => $classification->flags,
-                'summary' => $classification->summary,
-                'provider_failures' => $failures,
-            ]);
+            ['classification' => $classification, 'failures' => $failures] = $this->classifier->classify($screened->message, collect([$order]), $screened->flags);
+            $this->logClassification($classification, $failures);
         }
 
-        $context = $this->buildContext($order, $item, $classification, $screened->flags);
+        return $this->decide($order, $classification, $screened->flags, [
+            'submitted_email' => $email,
+            'submitted_order_number' => $orderNumber,
+            'message' => $screened->message,
+        ]);
+    }
+
+    /**
+     * Decide a request whose facts were gathered and confirmed in a chat conversation.
+     *
+     * @param  list<string>  $riskFlags  Flags accumulated across the whole conversation.
+     * @param  list<array{provider: string, error: string}>  $failures
+     */
+    public function submitFromConversation(Conversation $conversation, string $message, Classification $classification, array $riskFlags, array $failures): RefundRequest
+    {
+        $this->audit = [];
+        $this->log('conversation_verified', ['conversation' => $conversation->token, 'order' => $conversation->order->order_number]);
+        $this->logClassification($classification, $failures);
+
+        return $this->decide($conversation->order, $classification, $riskFlags, [
+            'conversation_id' => $conversation->id,
+            'submitted_email' => $conversation->customer->email,
+            'submitted_order_number' => $conversation->order->order_number,
+            'message' => $message,
+        ]);
+    }
+
+    public function findVerifiedOrder(string $email, string $orderNumber): ?Order
+    {
+        return Order::query()
+            ->with(['items', 'customer'])
+            ->where('order_number', Str::upper(trim($orderNumber)))
+            ->whereHas('customer', fn ($query) => $query->where('email', Str::lower(trim($email))))
+            ->first();
+    }
+
+    /**
+     * @param  list<string>  $inputFlags
+     * @param  array<string, mixed>  $attributes
+     */
+    private function decide(?Order $verifiedOrder, ?Classification $classification, array $inputFlags, array $attributes): RefundRequest
+    {
+        $reference = 'RF-'.Str::upper(Str::random(8));
+        $item = $classification?->itemId ? $this->findCustomerItem($verifiedOrder, $classification->itemId) : null;
+        $order = $item?->order ?? $verifiedOrder;
+
+        $context = $this->buildContext($order, $item, $classification, $inputFlags);
         $result = $this->policy->evaluate($context, now());
         $this->log('policy_evaluated', [
             'decision' => $result->decision->value,
@@ -68,15 +104,13 @@ class RefundRequestService
         $reply = $this->replyWriter->write($result, $order?->customer->first_name, $item?->product_name, $reference);
         $this->log('reply_generated', ['provider' => $reply['provider'], 'provider_failures' => $reply['failures']]);
 
-        return DB::transaction(function () use ($reference, $email, $orderNumber, $screened, $order, $item, $classification, $context, $result, $reply) {
+        return DB::transaction(function () use ($reference, $attributes, $order, $item, $classification, $context, $result, $reply) {
             $refundRequest = RefundRequest::create([
+                ...$attributes,
                 'reference' => $reference,
                 'customer_id' => $order?->customer_id,
                 'order_id' => $order?->id,
                 'order_item_id' => $item?->id,
-                'submitted_email' => $email,
-                'submitted_order_number' => $orderNumber,
-                'message' => $screened->message,
                 'ai_reason' => $classification?->reason,
                 'ai_confidence' => $classification?->confidence,
                 'ai_flags' => $classification?->flags,
@@ -100,12 +134,18 @@ class RefundRequestService
         });
     }
 
-    private function findVerifiedOrder(string $email, string $orderNumber): ?Order
+    /**
+     * The item must belong to the verified customer; it may sit on another of their orders.
+     */
+    private function findCustomerItem(?Order $verifiedOrder, int $itemId): ?OrderItem
     {
-        return Order::query()
-            ->with(['items', 'customer'])
-            ->where('order_number', Str::upper(trim($orderNumber)))
-            ->whereHas('customer', fn ($query) => $query->where('email', Str::lower(trim($email))))
+        if ($verifiedOrder === null) {
+            return null;
+        }
+
+        return OrderItem::with('order.customer')
+            ->whereKey($itemId)
+            ->whereHas('order', fn ($query) => $query->where('customer_id', $verifiedOrder->customer_id))
             ->first();
     }
 
@@ -145,6 +185,22 @@ class RefundRequestService
                 ->where('decision', RefundDecision::Escalated)
                 ->whereNull('final_decision')
                 ->exists();
+    }
+
+    /**
+     * @param  list<array{provider: string, error: string}>  $failures
+     */
+    private function logClassification(Classification $classification, array $failures): void
+    {
+        $this->log('ai_classified', [
+            'provider' => $classification->provider,
+            'reason' => $classification->reason->value,
+            'confidence' => $classification->confidence,
+            'item_id' => $classification->itemId,
+            'flags' => $classification->flags,
+            'summary' => $classification->summary,
+            'provider_failures' => $failures,
+        ]);
     }
 
     /**
