@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -44,6 +45,8 @@ class LlmClient
                 $response = Http::baseUrl($provider['base_url'])
                     ->withToken($provider['api_key'])
                     ->timeout($this->timeout)
+                    // Free tiers rate-limit bursts: wait briefly and retry before falling back.
+                    ->retry(2, 1500, fn (Throwable $e) => $e instanceof RequestException && $e->response->status() === 429)
                     ->acceptJson()
                     ->post('/chat/completions', [
                         'model' => $provider['model'],

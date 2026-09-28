@@ -72,7 +72,7 @@ class AssistantReplies
     {
         $subject = $item ? "the {$item->product_name}" : 'the item';
 
-        return "Could you tell me a little more about what's wrong with {$subject}? For example, did it arrive damaged, did you receive the wrong item, or have you changed your mind?";
+        return "Could you tell me a little more about what's wrong with {$subject}? For example, did it arrive damaged, is it the wrong item, has it not arrived, or have you changed your mind?";
     }
 
     public function confirm(OrderItem $item, RefundReason $reason): string
@@ -100,7 +100,7 @@ class AssistantReplies
      */
     public function reasonQuickReplies(): array
     {
-        return ['It arrived damaged', 'I received the wrong item', "I've changed my mind"];
+        return ['It arrived damaged', 'I received the wrong item', "It hasn't arrived", "I've changed my mind"];
     }
 
     public function orderLine(Order $order): string
