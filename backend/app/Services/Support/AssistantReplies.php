@@ -58,14 +58,33 @@ class AssistantReplies
      */
     public function productNotFound(string $product, Collection $orders): string
     {
-        $lines = $orders->map(fn (Order $order) => '• '.$this->orderLine($order))->implode("\n");
-
-        return "I couldn't find \"{$product}\" on your orders. Here is what I can see on your account:\n{$lines}\n\nIs it one of these items I can help you with?";
+        return "I couldn't find \"{$product}\" on your orders. Here is what I can see on your account:\n{$this->orderList($orders)}\n\nIs it one of these items I can help you with?";
     }
 
-    public function askWhichItem(Order $order): string
+    /**
+     * @param  Collection<int, Order>  $orders
+     */
+    public function askWhichItem(Collection $orders): string
     {
-        return "Which item from order {$order->order_number} is this about?";
+        return "Which item is this about? Here is what I can see on your account:\n{$this->orderList($orders)}\n\nIf it's about a different order, send me its order number.";
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     */
+    public function orderNotOnAccount(string $orderNumber, Collection $orders): string
+    {
+        return "I can't find order {$orderNumber} on your account. Here is what I can see:\n{$this->orderList($orders)}\n\nIs it one of these items you need help with?";
+    }
+
+    public function notARefund(): string
+    {
+        return "Understood. Here I can help with refunds for items that arrived damaged, were wrong, haven't arrived, or that you no longer want. For exchanges or anything else, please email our support team and they'll help you.\n\nIs there a refund I can help you with?";
+    }
+
+    public function handedOffUnclear(string $firstName): string
+    {
+        return "Thanks, {$firstName}. I haven't been able to work out exactly which item this is about, so I've passed your conversation to our support team. They'll review it and get back to you by email within 1-2 business days.";
     }
 
     public function askForReason(?OrderItem $item): string
@@ -101,6 +120,14 @@ class AssistantReplies
     public function reasonQuickReplies(): array
     {
         return ['It arrived damaged', 'I received the wrong item', "It hasn't arrived", "I've changed my mind"];
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     */
+    private function orderList(Collection $orders): string
+    {
+        return $orders->map(fn (Order $order) => '• '.$this->orderLine($order))->implode("\n");
     }
 
     public function orderLine(Order $order): string

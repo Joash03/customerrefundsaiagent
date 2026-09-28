@@ -163,14 +163,72 @@ class ConversationTest extends TestCase
         $this->assertFalse(RefundRequest::whereNotNull('conversation_id')->exists());
     }
 
-    public function test_persistent_unclear_request_is_escalated_after_two_clarifications(): void
+    public function test_persistent_unclear_request_is_handed_to_a_person_after_two_clarifications(): void
     {
         $this->send('charlotte.davis@example.com ORD-10014');
         $this->send('Something is off with my order');
         $this->send('I am just not happy');
 
-        $this->send('Please sort it out')->assertJsonPath('data.messages.1.decision', 'escalated');
-        $this->assertContains('R8', RefundRequest::latest('id')->value('matched_rules'));
+        $response = $this->send('Please sort it out')->assertJsonPath('data.stage', 'handed_off');
+        $this->assertStringContainsString('passed your conversation to our support team', $this->assistantSaid($response)[0]);
+
+        $request = RefundRequest::latest('id')->first();
+        $this->assertSame('escalated', $request->decision->value);
+        $this->assertContains('R8', $request->matched_rules);
+        $this->assertSame('template', $request->auditLogs->firstWhere('step', 'reply_generated')->payload['provider']);
+    }
+
+    public function test_which_item_question_lists_everything_on_the_account(): void
+    {
+        config(['llm.providers.groq.api_key' => 'test-key']);
+        $this->app->forgetInstance(LlmClient::class);
+        Http::fake(['api.groq.com/*' => Http::response($this->completion([
+            'item_id' => null, 'product_mentioned' => null, 'reason' => 'other', 'confidence' => 0.3, 'flags' => [], 'summary' => 'Unclear issue.',
+        ]))]);
+
+        $this->send('grace.miller@example.com ORD-10016');
+
+        $response = $this->send('something about my order is wrong')
+            ->assertJsonPath('data.messages.1.quick_replies', ['Linen Bedsheet Set (Queen)', 'Bamboo Bath Towels (Set of 4)']);
+        $said = $this->assistantSaid($response)[0];
+
+        $this->assertStringContainsString('ORD-10016', $said);
+        $this->assertStringContainsString('ORD-10017', $said);
+        $this->assertStringContainsString('different order, send me its order number', $said);
+    }
+
+    public function test_customer_can_move_the_chat_to_another_of_their_orders(): void
+    {
+        $this->send('grace.miller@example.com ORD-10016');
+        $this->send('ORD-10017 the bamboo towels never arrived');
+
+        $this->assertSame(
+            'ORD-10017',
+            Conversation::first()->order->order_number,
+        );
+    }
+
+    public function test_order_number_not_on_the_account_is_refused_without_revealing_it(): void
+    {
+        $this->send('liam.carter@example.com ORD-10002');
+
+        $response = $this->send('I made another order ORD-10001 and it never arrived')
+            ->assertJsonPath('data.stage', 'awaiting_issue');
+        $said = $this->assistantSaid($response)[0];
+
+        $this->assertStringContainsString("can't find order ORD-10001 on your account", $said);
+        $this->assertStringNotContainsString('Headphones', $said);
+        $this->assertStringContainsString('Trail Running Shoes', $said);
+    }
+
+    public function test_customer_who_does_not_want_a_refund_is_told_what_the_chat_can_do(): void
+    {
+        $this->send('liam.carter@example.com ORD-10002 I ordered size 15 and got a size 30');
+
+        $response = $this->send('no i dont want a refund')->assertJsonPath('data.stage', 'awaiting_issue');
+
+        $this->assertStringContainsString('For exchanges or anything else', $this->assistantSaid($response)[0]);
+        $this->assertFalse(RefundRequest::whereNotNull('conversation_id')->exists());
     }
 
     public function test_injection_anywhere_in_the_conversation_forces_escalation(): void

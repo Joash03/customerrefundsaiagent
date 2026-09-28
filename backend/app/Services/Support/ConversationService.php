@@ -36,6 +36,8 @@ class ConversationService
     /** Words that surround identity details without describing a problem. */
     private const IDENTITY_FILLER = ['hi', 'hello', 'hey', 'i', 'am', 'im', 'my', 'is', 'its', 'it', 'the', 'and', 'email', 'address', 'order', 'number', 'here', 'thanks', 'thank', 'you', 'please', 'name'];
 
+    private const NOT_REFUND_PATTERN = '/\b(don\'?t|do not|no longer)\s+(want|need)\s+(a\s+)?refund\b/i';
+
     private const DONE_PATTERN = '/^\s*(no|nope|nothing|that\'?s all|that is all|all good|i\'?m good)\b/i';
 
     /** @var list<ConversationMessage> */
@@ -170,6 +172,17 @@ class ConversationService
             return;
         }
 
+        if (preg_match(self::NOT_REFUND_PATTERN, $text)) {
+            $this->resetIssue($conversation);
+            $this->say($conversation, $this->copy->notARefund());
+
+            return;
+        }
+
+        if (! $this->focusMentionedOrder($conversation, $text)) {
+            return;
+        }
+
         $issueMessages = [...($context['issue_messages'] ?? []), $text];
         $orders = $this->customerOrders($conversation);
 
@@ -194,8 +207,7 @@ class ConversationService
         }
 
         if ($item === null) {
-            // Still unclear after clarifying: let the policy engine route it to a human.
-            $this->decide($conversation, $classification, $failures);
+            $this->handOffUnclear($conversation, $classification, $failures);
 
             return;
         }
@@ -214,14 +226,14 @@ class ConversationService
             $this->say(
                 $conversation,
                 $this->copy->productNotFound($classification->productMentioned, $orders),
-                $orders->flatMap->items->pluck('product_name')->take(6)->all(),
+                $this->itemQuickReplies($orders),
             );
 
             return;
         }
 
         if ($item === null) {
-            $this->say($conversation, $this->copy->askWhichItem($conversation->order), $conversation->order->items->pluck('product_name')->all());
+            $this->say($conversation, $this->copy->askWhichItem($orders), $this->itemQuickReplies($orders));
 
             return;
         }
@@ -241,6 +253,12 @@ class ConversationService
 
         $this->resetIssue($conversation);
 
+        if (preg_match(self::NOT_REFUND_PATTERN, $text)) {
+            $this->say($conversation, $this->copy->notARefund());
+
+            return;
+        }
+
         if (preg_match(self::NO_PATTERN, $text)) {
             $this->say($conversation, $this->copy->restartIssue());
 
@@ -249,6 +267,68 @@ class ConversationService
 
         // Anything else is treated as a fresh description of the problem.
         $this->handleIssue($conversation, $text);
+    }
+
+    /**
+     * Lets a verified customer move the chat to another of their own orders by quoting its number.
+     * Returns false when the order is not on their account (the customer has already been told).
+     */
+    private function focusMentionedOrder(Conversation $conversation, string $text): bool
+    {
+        if (! preg_match(self::ORDER_PATTERN, $text, $match)) {
+            return true;
+        }
+
+        $orderNumber = 'ORD-'.$match[1];
+        $order = Order::with('items')
+            ->where('customer_id', $conversation->customer_id)
+            ->where('order_number', $orderNumber)
+            ->first();
+
+        if ($order === null) {
+            $orders = $this->customerOrders($conversation);
+            $this->say($conversation, $this->copy->orderNotOnAccount($orderNumber, $orders), $this->itemQuickReplies($orders));
+
+            return false;
+        }
+
+        $conversation->order_id = $order->id;
+        $conversation->setRelation('order', $order);
+
+        return true;
+    }
+
+    /**
+     * Still unclear after clarifying: pass the chat to a person instead of guessing.
+     * The request is recorded (the policy engine escalates it) so staff can follow up.
+     *
+     * @param  list<array{provider: string, error: string}>  $failures
+     */
+    private function handOffUnclear(Conversation $conversation, Classification $classification, array $failures): void
+    {
+        $reply = $this->copy->handedOffUnclear($conversation->customer->first_name);
+
+        $this->refunds->submitFromConversation(
+            $conversation,
+            implode("\n", $conversation->context['issue_messages'] ?? []),
+            $classification,
+            $conversation->risk_flags ?? [],
+            $failures,
+            $reply,
+        );
+
+        $this->resetIssue($conversation);
+        $conversation->stage = ConversationStage::HandedOff;
+        $this->say($conversation, $reply);
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     * @return list<string>
+     */
+    private function itemQuickReplies(Collection $orders): array
+    {
+        return $orders->flatMap->items->pluck('product_name')->unique()->take(6)->values()->all();
     }
 
     /**

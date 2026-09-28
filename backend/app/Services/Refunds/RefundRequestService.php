@@ -58,8 +58,9 @@ class RefundRequestService
      *
      * @param  list<string>  $riskFlags  Flags accumulated across the whole conversation.
      * @param  list<array{provider: string, error: string}>  $failures
+     * @param  string|null  $fixedReply  Reply to record instead of drafting one with the AI.
      */
-    public function submitFromConversation(Conversation $conversation, string $message, Classification $classification, array $riskFlags, array $failures): RefundRequest
+    public function submitFromConversation(Conversation $conversation, string $message, Classification $classification, array $riskFlags, array $failures, ?string $fixedReply = null): RefundRequest
     {
         $this->audit = [];
         $this->log('conversation_verified', ['conversation' => $conversation->token, 'order' => $conversation->order->order_number]);
@@ -70,7 +71,7 @@ class RefundRequestService
             'submitted_email' => $conversation->customer->email,
             'submitted_order_number' => $conversation->order->order_number,
             'message' => $message,
-        ]);
+        ], $fixedReply);
     }
 
     public function findVerifiedOrder(string $email, string $orderNumber): ?Order
@@ -86,7 +87,7 @@ class RefundRequestService
      * @param  list<string>  $inputFlags
      * @param  array<string, mixed>  $attributes
      */
-    private function decide(?Order $verifiedOrder, ?Classification $classification, array $inputFlags, array $attributes): RefundRequest
+    private function decide(?Order $verifiedOrder, ?Classification $classification, array $inputFlags, array $attributes, ?string $fixedReply = null): RefundRequest
     {
         $reference = 'RF-'.Str::upper(Str::random(8));
         $item = $classification?->itemId ? $this->findCustomerItem($verifiedOrder, $classification->itemId) : null;
@@ -101,7 +102,9 @@ class RefundRequestService
             'refund_amount' => $context->refundAmount,
         ]);
 
-        $reply = $this->replyWriter->write($result, $order?->customer->first_name, $item?->product_name, $reference);
+        $reply = $fixedReply !== null
+            ? ['reply' => $fixedReply, 'provider' => 'template', 'failures' => []]
+            : $this->replyWriter->write($result, $order?->customer->first_name, $item?->product_name, $reference);
         $this->log('reply_generated', ['provider' => $reply['provider'], 'provider_failures' => $reply['failures']]);
 
         return DB::transaction(function () use ($reference, $attributes, $order, $item, $classification, $context, $result, $reply) {
