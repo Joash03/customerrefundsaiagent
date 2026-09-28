@@ -1,9 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
-import AuditTimeline from '../components/AuditTimeline'
-import RefundStatusBadges from '../components/RefundStatusBadges'
-import ReviewForm from '../components/ReviewForm'
-import { useApi } from '../hooks/useApi'
-import { formatDateTime, formatMoney, humanize } from '../utils/format'
+import AuditTimeline from '../../components/admin/AuditTimeline'
+import RefundStatusBadges from '../../components/admin/RefundStatusBadges'
+import ReviewForm from '../../components/admin/ReviewForm'
+import { useApi } from '../../hooks/useApi'
+import { formatDateTime, formatMoney, humanize } from '../../utils/format'
 
 /**
  * @param {{ label: string, children: import('react').ReactNode }} props
@@ -100,6 +100,27 @@ export default function RefundRequestDetailPage() {
               <div className="small">Refund amount: <strong className="text-tabular">{formatMoney(request.refund_amount)}</strong></div>
             </div>
           </section>
+
+          {request.transcript && (
+            <section className="card" aria-labelledby="transcript-heading">
+              <div className="card-body">
+                <h2 id="transcript-heading" className="h6">
+                  <i className="bi bi-chat-left-text me-2" aria-hidden="true" />Chat transcript
+                </h2>
+                <ol className="transcript list-unstyled mb-0" tabIndex={0} aria-label="Chat transcript, scrollable">
+                  {request.transcript.map((message, index) => (
+                    <li key={`${message.created_at}-${index}`} className="mb-2">
+                      <span className={`small fw-semibold ${message.role === 'customer' ? 'text-primary' : 'text-body-secondary'}`}>
+                        {message.role === 'customer' ? 'Customer' : 'Assistant'}
+                      </span>
+                      <span className="small text-body-secondary ms-2">{formatDateTime(message.created_at)}</span>
+                      <p className="small mb-0 text-prewrap">{message.content}</p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          )}
 
           <section className="card" aria-labelledby="reply-heading">
             <div className="card-body">

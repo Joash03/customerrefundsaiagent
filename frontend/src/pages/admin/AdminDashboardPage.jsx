@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import RefundStatusBadges from '../components/RefundStatusBadges'
-import StatCard from '../components/StatCard'
-import { useApi } from '../hooks/useApi'
-import { formatDateTime, formatMoney, humanize } from '../utils/format'
+import RefundStatusBadges from '../../components/admin/RefundStatusBadges'
+import StatCard from '../../components/admin/StatCard'
+import { useApi } from '../../hooks/useApi'
+import { formatDateTime, formatMoney, humanize } from '../../utils/format'
 
 const STATS = [
   { key: 'total', label: 'Total requests', icon: 'bi-inbox' },
@@ -35,6 +35,7 @@ export default function AdminDashboardPage() {
     }, 300)
     return () => clearTimeout(timer)
     // Only the typed value should trigger the debounce.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const refresh = () => {

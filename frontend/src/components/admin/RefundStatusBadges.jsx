@@ -1,4 +1,4 @@
-import DecisionBadge from './DecisionBadge'
+import DecisionBadge from '../DecisionBadge'
 
 /**
  * Shows the system decision and, for escalations, the review outcome.

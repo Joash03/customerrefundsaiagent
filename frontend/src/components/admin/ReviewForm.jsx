@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { apiRequest } from '../api/client'
+import { apiRequest } from '../../api/client'
 
 /**
  * Lets a support agent approve or deny an escalated request.

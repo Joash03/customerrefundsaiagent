@@ -1,4 +1,4 @@
-import { formatDateTime, humanize } from '../utils/format'
+import { formatDateTime, humanize } from '../../utils/format'
 
 const STEP_LABELS = {
   input_screened: 'Input screened for prompt injection',
