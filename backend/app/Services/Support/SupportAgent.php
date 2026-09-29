@@ -62,10 +62,8 @@ class SupportAgent
             $toolCalls = $message['tool_calls'] ?? [];
 
             if ($toolCalls === []) {
-                // Some models leave stage directions such as "(Waiting for user response)" in the text.
-                // The chat shows plain text, so markdown emphasis is removed too.
-                $reply = trim(preg_replace(['/\s*\((waiting|awaiting)[^)]*\)/i', '/\*\*(.+?)\*\*/s'], ['', '$1'], (string) $message['content']) ?? '');
-                $visible[] = $this->finish($conversation, $reply !== '' ? $reply : self::UNAVAILABLE);
+                $reply = $this->cleanReply((string) $message['content']);
+                $visible[] = $this->finish($conversation, $reply !== '' ? $reply : self::UNAVAILABLE, $result->provider);
 
                 return $visible;
             }
@@ -96,12 +94,28 @@ class SupportAgent
         return $visible;
     }
 
-    private function finish(Conversation $conversation, string $content): ConversationMessage
+    /**
+     * Normalise model output into one plain-text chat message. gpt-oss models sometimes run several
+     * replies together ("...ORD-12345)?Sure thing..."), or leave stage directions and markdown.
+     */
+    public function cleanReply(string $content): string
+    {
+        $content = preg_replace(['/\s*\((waiting|awaiting)[^)]*\)/i', '/\*\*(.+?)\*\*/s'], ['', '$1'], $content) ?? '';
+
+        // A new sentence starting with no space after the previous one, or a long run of dots, marks a second reply.
+        $first = preg_split('/(?<=[.!?)])(?=[A-Z\x{2018}\x{201C}"\'])|\.{4,}|\x{2026}{2,}/u', trim($content))[0] ?? '';
+
+        return trim($first);
+    }
+
+    private function finish(Conversation $conversation, string $content, ?string $provider = null): ConversationMessage
     {
         $submitted = $this->tools->submitted;
-        $meta = $submitted && $submitted->order_item_id !== null
-            ? ['decision' => $submitted->decision->value, 'reference' => $submitted->reference]
-            : [];
+        $meta = array_filter([
+            'decision' => $submitted?->order_item_id !== null ? $submitted->decision->value : null,
+            'reference' => $submitted?->order_item_id !== null ? $submitted->reference : null,
+            'provider' => $provider,
+        ]);
 
         $submitted?->update(['customer_reply' => $content]);
 
