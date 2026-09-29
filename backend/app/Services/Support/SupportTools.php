@@ -293,7 +293,7 @@ class SupportTools
     {
         return $conversation->messages()
             ->where('role', ConversationMessage::ROLE_CUSTOMER)
-            ->latest('id')
+            ->reorder('id', 'desc')
             ->limit(4)
             ->pluck('content')
             ->reverse()
