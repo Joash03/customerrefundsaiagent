@@ -19,9 +19,9 @@ $headings-font-weight: 600;
 $headings-line-height: 1.2;
 $enable-shadows: false;
 
-$border-radius: .75rem;
-$border-radius-sm: .5rem;
-$border-radius-lg: 1rem;
+$border-radius: .5rem;
+$border-radius-sm: .375rem;
+$border-radius-lg: .75rem;
 
 $link-color: $ink;
 $link-decoration: underline;
@@ -30,9 +30,9 @@ $link-underline-offset: .2em;
 $btn-font-weight: 500;
 $btn-padding-y: .625rem;
 $btn-padding-x: 1.25rem;
-$btn-border-radius: 999px;
-$btn-border-radius-sm: 999px;
-$btn-border-radius-lg: 999px;
+$btn-border-radius: $border-radius;
+$btn-border-radius-sm: $border-radius-sm;
+$btn-border-radius-lg: $border-radius;
 $btn-focus-box-shadow: none;
 
 $input-border-color: $line;
@@ -423,7 +423,7 @@ h3, h4, h5, h6, .h3, .h4, .h5, .h6 {
   gap: .5rem;
   padding: .375rem .375rem .375rem .875rem;
   border: 1px solid $line;
-  border-radius: 1.5rem;
+  border-radius: $border-radius-lg;
   background: $paper;
   transition: border-color .15s ease;
 
@@ -617,4 +617,33 @@ h3, h4, h5, h6, .h3, .h4, .h5, .h6 {
 // Horizontal scrolling only; avoids a stray vertical scrollbar from sub-pixel overflow.
 .table-responsive {
   overflow-y: hidden;
+}
+
+// Password input with the show/hide toggle inside the field.
+.password-field {
+  position: relative;
+
+  .form-control {
+    padding-right: 3rem;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: .375rem;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: $border-radius-sm;
+  background: transparent;
+  color: $graphite;
+
+  &:hover {
+    background: $mist;
+    color: $ink;
+  }
 }

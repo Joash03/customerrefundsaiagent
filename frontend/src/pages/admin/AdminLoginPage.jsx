@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
               </div>
               <div className="mb-4">
                 <label htmlFor="admin-password" className="form-label">Password</label>
-                <div className="input-group">
+                <div className="password-field">
                   <input
                     id="admin-password"
                     name="password"
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
                   />
                   <button
                     type="button"
-                    className="btn btn-outline-secondary"
+                    className="password-toggle"
                     onClick={() => setShowPassword((shown) => !shown)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     aria-pressed={showPassword}
