@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import RefundStatusBadges from '../../components/admin/RefundStatusBadges'
 import StatCard from '../../components/admin/StatCard'
 import { useApi } from '../../hooks/useApi'
@@ -15,6 +15,7 @@ const STATS = [
 
 export default function AdminDashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [search, setSearch] = useState(searchParams.get('search') ?? '')
 
   const stats = useApi('/admin/stats')
@@ -139,7 +140,8 @@ export default function AdminDashboardPage() {
                 </td></tr>
               )}
               {requests.map((request) => (
-                <tr key={request.id}>
+                // The whole row opens the request; the reference link keeps it keyboard and new-tab friendly.
+                <tr key={request.id} className="row-link" onClick={() => navigate(`/admin/requests/${request.id}`)}>
                   <td className="text-nowrap"><Link to={`/admin/requests/${request.id}`} className="fw-semibold">{request.reference}</Link></td>
                   <td>
                     <div>{request.customer?.name ?? <span className="text-body-secondary">Unverified</span>}</div>
